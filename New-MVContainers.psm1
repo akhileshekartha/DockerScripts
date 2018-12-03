@@ -46,8 +46,9 @@ if ($navImageNameTag -eq "") {
 		""   { $navImageNameTag += '.2018'}
 		"UKR"{ $navImageNameTag += '.2018'}
 		"GR" { $navImageNameTag += '.2018'}
-	    "LV" { $navImageNameTag += '.2017cu11'}     
-		"BH" { $navImageNameTag += '.2017cu11'}		
+		"BH" { $navImageNameTag += '.2018'}	
+		"LT" { $navImageNameTag += '.2018'}	
+	    "LV" { $navImageNameTag += '.2017cu11'}     			
 	   }
 }
 
@@ -68,7 +69,7 @@ $StopWatchDatabase.Start();
 $var = docker ps --format='{{.Names}}' -a --filter "name=$dbcontainername"
 if ($var -eq $dbcontainername) { docker rm $dbcontainername --force }
 Write-Host -ForegroundColor Yellow "Creating Database container $dbcontainername..."
-docker run -d --hostname=$dbcontainername --memory 3G -e locale=$locale -e ACCEPT_EULA=Y -e sa_password=$password -v C:/temp/:C:/temp --name $dbcontainername $dbimage
+docker run -d --hostname=$dbcontainername --memory 2G --cpu-shares=512 --restart no -e locale=$locale -e ACCEPT_EULA=Y -e sa_password=$password -v C:/temp/:C:/temp --name $dbcontainername $dbimage
 
 $prevLog = ""
 Write-Host -ForegroundColor Yellow "Waiting for container $dbcontainername to be ready"
@@ -109,10 +110,10 @@ if($nav -eq $containerName){
     Remove-Item -Path "C:\ProgramData\NavContainerHelper\Extensions\$hostname\" -Recurse -Force
 }
 
-$AddtionalParam = "--env locale=nl-NL"
+$AddtionalParam = "--env locale=nl-NL --cpu-shares=512"
 if($gitFolder -ne '') {$AddtionalParam += " --volume $($gitFolder):C:\Run\mvx\Repo"}
 
-new-navcontainer -accept_eula -accept_outdated -updateHosts -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
+new-navcontainer -accept_eula -accept_outdated -updateHosts -isolation hyperv -restart no -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
 -doNotExportObjectsToText -enableSymbolLoading -Credential $dbcred -databaseServer $dbcontainername -databaseName $dbname -databaseCredential $dbcred `
 -AdditionalParameters @($AddtionalParam) 
 
