@@ -110,7 +110,7 @@ if($nav -eq $containerName){
     Remove-Item -Path "C:\ProgramData\NavContainerHelper\Extensions\$hostname\" -Recurse -Force
 }
 
-$AddtionalParam = "--env locale=nl-NL --cpu-shares=512"
+$AddtionalParam = "--env locale=nl-NL --cpu-shares=512 --env CustomNavSettings=EnableTaskScheduler=true"
 if($gitFolder -ne '') {$AddtionalParam += " --volume $($gitFolder):C:\Run\mvx\Repo"}
 
 new-navcontainer -accept_eula -accept_outdated -updateHosts -isolation hyperv -restart no -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
