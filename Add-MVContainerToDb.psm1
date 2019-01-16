@@ -5,7 +5,7 @@
   [string]$containerName,
   [Parameter(Mandatory=$true)]
   [string]$dbcontainername,
-  [ValidateSet('LT','LV','BH','UKR','GR')]
+  [ValidateSet('LT','LV','BH','UKR','GR','EE')]
   [string]$countryCode,
   [string]$licenseFile,
   [string]$navImageNameTag,
@@ -32,8 +32,9 @@ if ($navImageNameTag -eq "") {
 		""   { $navImageNameTag += '.2018'}
 		"UKR"{ $navImageNameTag += '.2018'}
 		"GR" { $navImageNameTag += '.2018'}
-		"LT" { $navImageNameTag += '.2018'}
-	    "BH" { $navImageNameTag += '.2018'}		
+		"LT" { $navImageNameTag += '.2018'}	
+	    "BH" { $navImageNameTag += '.2018'}	
+        "EE" { $navImageNameTag += '.2018'}			
 	    "LV" { $navImageNameTag += '.2017cu11'}     
 		}
 }
@@ -75,11 +76,11 @@ if($nav -eq $hostname){
   Remove-Item -Path "C:\ProgramData\NavContainerHelper\Extensions\$hostname\" -Recurse -Force
 }
 
-$AddtionalParam = "--env locale=nl-NL --cpu-shares=512 --expose 8050"
+$AddtionalParam = "--env locale=nl-NL --cpu-shares=512"
 if($gitFolder -ne '') {$AddtionalParam += " --volume $($gitFolder):C:\Run\mvx\Repo"}
 
-new-navcontainer -accept_eula -accept_outdated -updateHosts -isolation hyperv -restart no -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
--doNotExportObjectsToText -enableSymbolLoading -Credential $dbcred -databaseServer $dbcontainername -databaseName $dbname -databaseCredential $dbcred `
+new-navcontainer -accept_eula -accept_outdated -updateHosts -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
+-doNotExportObjectsToText -Credential $dbcred -databaseServer $dbcontainername -databaseName $dbname -databaseCredential $dbcred `
 -AdditionalParameters @($AddtionalParam) 
 
 

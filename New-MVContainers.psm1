@@ -3,7 +3,7 @@
   Param(
   [Parameter(Mandatory=$true)]
   [string]$containerName,
-  [ValidateSet('LT','LV','BH','UKR','GR')]
+  [ValidateSet('LT','LV','BH','UKR','GR','EE')]
   [string]$countryCode,
   [string]$licenseFile,
   [string]$navImageNameTag = "",
@@ -47,7 +47,8 @@ if ($navImageNameTag -eq "") {
 		"UKR"{ $navImageNameTag += '.2018'}
 		"GR" { $navImageNameTag += '.2018'}
 		"BH" { $navImageNameTag += '.2018'}	
-		"LT" { $navImageNameTag += '.2018'}	
+		"LT" { $navImageNameTag += '.2018'}
+        "EE" { $navImageNameTag += '.2018'}		
 	    "LV" { $navImageNameTag += '.2017cu11'}     			
 	   }
 }
@@ -61,6 +62,7 @@ if ($dbimage -eq "") {
     "BH"  {$dbimage = 'navapps/mvxsql:bh.latest'}
 	"GR"  {$dbimage = 'navapps/mvxsql:gr.latest'}
 	"UKR" {$dbimage = 'navapps/mvxsql:ukr.latest'}
+	"EE"  {$dbimage = 'navapps/mvxsql:ee.latest'}
     }
 }
 
@@ -114,7 +116,7 @@ $AddtionalParam = "--env locale=nl-NL --cpu-shares=512 --env CustomNavSettings=E
 if($gitFolder -ne '') {$AddtionalParam += " --volume $($gitFolder):C:\Run\mvx\Repo"}
 
 new-navcontainer -accept_eula -accept_outdated -updateHosts -isolation hyperv -restart no -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
--doNotExportObjectsToText -enableSymbolLoading -Credential $dbcred -databaseServer $dbcontainername -databaseName $dbname -databaseCredential $dbcred `
+-doNotExportObjectsToText -Credential $dbcred -databaseServer $dbcontainername -databaseName $dbname -databaseCredential $dbcred `
 -AdditionalParameters @($AddtionalParam) 
 
 $StopWatchMV = New-Object -TypeName System.Diagnostics.Stopwatch 
