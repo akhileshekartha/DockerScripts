@@ -5,7 +5,7 @@
   [string]$containerName,
   [Parameter(Mandatory=$true)]
   [string]$dbcontainername,
-  [ValidateSet('LT','LV','BH','UKR','GR','EE')]
+  [ValidateSet('LT','LV','BH','UKR','GR','EE','LVPOS')]
   [string]$countryCode,
   [string]$licenseFile,
   [string]$navImageNameTag,
@@ -29,14 +29,15 @@ if ($navImageNameTag -eq "") {
   $navImageNameTag ='navapps/mv-dynamics-nav:latest'
   switch($countryCode)
        {
-		""   { $navImageNameTag += '.2018'}
-		"UKR"{ $navImageNameTag += '.2018'}
-		"GR" { $navImageNameTag += '.2018'}
-		"LT" { $navImageNameTag += '.2018'}	
-	    "BH" { $navImageNameTag += '.2018'}	
-        "EE" { $navImageNameTag += '.2018'}			
-	    "LV" { $navImageNameTag += '.2017cu11'}     
-		}
+		""   { $navImageNameTag += '.bc.mv'}
+		"UKR"{ $navImageNameTag += '.bc.ukr'}
+		"GR" { $navImageNameTag += '.bc.gr'}
+		"BH" { $navImageNameTag += '.bc.bh'}	
+		"LT" { $navImageNameTag += '.2018.baltic'} 
+        "EE" { $navImageNameTag += '.2018.baltic'}	
+	    "LV" { $navImageNameTag += '.2018.baltic'}
+        "LVPOS"	{ $navImageNameTag += '.2017.baltic'}	
+	   }
 }
 
 

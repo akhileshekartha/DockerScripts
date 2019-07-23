@@ -3,7 +3,7 @@
   Param(
   [Parameter(Mandatory=$true)]
   [string]$containerName,
-  [ValidateSet('LT','LV','BH','UKR','GR','EE')]
+  [ValidateSet('LT','LV','BH','UKR','GR','EE','LVPOS')]
   [string]$countryCode,
   [string]$licenseFile,
   [string]$navImageNameTag = "",
@@ -43,13 +43,14 @@ if ($navImageNameTag -eq "") {
   $navImageNameTag ='navapps/mv-dynamics-nav:latest'
   switch($countryCode)
        {
-		""   { $navImageNameTag += '.2018'}
-		"UKR"{ $navImageNameTag += '.2018'}
-		"GR" { $navImageNameTag += '.2018'}
-		"BH" { $navImageNameTag += '.2018'}	
-		"LT" { $navImageNameTag += '.2018'}
-        "EE" { $navImageNameTag += '.2018'}		
-	    "LV" { $navImageNameTag += '.2017cu11'}     			
+		""   { $navImageNameTag += '.bc.mv'}
+		"UKR"{ $navImageNameTag += '.bc.ukr'}
+		"GR" { $navImageNameTag += '.bc.gr'}
+		"BH" { $navImageNameTag += '.bc.bh'}	
+		"LT" { $navImageNameTag += '.2018.baltic'} 
+        "EE" { $navImageNameTag += '.2018.baltic'}	
+	    "LV" { $navImageNameTag += '.2018.baltic'}
+        "LVPOS"	{ $navImageNameTag += '.2017.baltic'}	
 	   }
 }
 
@@ -63,6 +64,7 @@ if ($dbimage -eq "") {
 	"GR"  {$dbimage = 'navapps/mvxsql:gr.latest'}
 	"UKR" {$dbimage = 'navapps/mvxsql:ukr.latest'}
 	"EE"  {$dbimage = 'navapps/mvxsql:ee.latest'}
+	"LVPOS" {$dbimage = 'navapps/mvxsql:lvpos.latest'}
     }
 }
 
@@ -70,8 +72,15 @@ $StopWatchDatabase = New-Object -TypeName System.Diagnostics.Stopwatch
 $StopWatchDatabase.Start();
 $var = docker ps --format='{{.Names}}' -a --filter "name=$dbcontainername"
 if ($var -eq $dbcontainername) { docker rm $dbcontainername --force }
+
+
+$hostOsVersion = [environment]::OSVersion.Version.Build
+if ($hostOsVersion -eq " 18362") {$isolation = "process"}
+else{$isolation = "hyperv"}
+
+
 Write-Host -ForegroundColor Yellow "Creating Database container $dbcontainername..."
-docker run -d --hostname=$dbcontainername --memory 2G --cpu-shares=512 --restart no -e locale=$locale -e ACCEPT_EULA=Y -e sa_password=$password -v C:/temp/:C:/temp --name $dbcontainername $dbimage
+docker run -d --hostname=$dbcontainername --isolation $isolation --memory 2G --cpu-shares=512 --restart no -e locale=$locale -e ACCEPT_EULA=Y -e sa_password=$password -v C:/temp/:C:/temp --name $dbcontainername $dbimage
 
 $prevLog = ""
 Write-Host -ForegroundColor Yellow "Waiting for container $dbcontainername to be ready"
@@ -97,7 +106,8 @@ do {
   } while (!($log.Contains("VERBOSE: Started SQL Server.")))
 	Write-Host  
 
-
+	
+	
 $dbNamePattern = '(DATABASE) +\[(.*?)\]'
 $logs = docker logs $dbcontainername
 $dbname = [regex]::Match($logs,$dbNamePattern).Groups[2].Value 
@@ -115,7 +125,7 @@ if($nav -eq $containerName){
 $AddtionalParam = "--env locale=nl-NL --cpu-shares=512 --env CustomNavSettings=EnableTaskScheduler=true"
 if($gitFolder -ne '') {$AddtionalParam += " --volume $($gitFolder):C:\Run\mvx\Repo"}
 
-new-navcontainer -accept_eula -accept_outdated -updateHosts -isolation hyperv -restart no -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
+new-navcontainer -accept_eula -accept_outdated -updateHosts -includecside -FileSharePort 21 -containername $hostname -imageName $navImageNameTag -auth NavUserPassword -licenseFile $licenseFile `
 -doNotExportObjectsToText -Credential $dbcred -databaseServer $dbcontainername -databaseName $dbname -databaseCredential $dbcred `
 -AdditionalParameters @($AddtionalParam) 
 
@@ -126,6 +136,25 @@ docker exec $hostname powershell -command "C:\run\mvx\ChangeUidOffset.ps1 -UidOf
 
 $StopWatchMV.Stop();
 Write-Host -ForegroundColor Green "Time to setup addtional components:" $StopWatchMV.Elapsed.ToString()
+
+Write-Host "Update hosts file with database server IP"
+$file = "$env:windir\System32\drivers\etc\hosts"
+$dbcontainerip = docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $dbcontainername
+$data = foreach($line in Get-Content $file){
+  if($line -match $dbcontainername)
+  { }
+  else
+  {
+    $line
+  }
+}
+"$dbcontainerip $dbcontainername" | Add-Content -PassThru $data
+$data | Set-Content $file -Force
+
+$hostsContent = Get-Content $file 
+if ($hostsContent -like $dbcontainername)
+{$hostsContent | select-string -pattern $dbcontainername -nomatch | Out-File $file -Force }
+"$dbcontainerip $dbcontainername" | Add-Content -PassThru $file	
 
 $StopWatch.Stop();
 Write-Host -ForegroundColor Green "Finished. Total time for setup:" $StopWatch.Elapsed.ToString()
