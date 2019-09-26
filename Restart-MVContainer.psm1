@@ -8,6 +8,9 @@ $dbsFormat = '(?<=databaseServer=).*?(?=\s)'
 $dbServer = [regex]::Match($envContent,$dbsFormat)
 
 docker restart $dbServer
+
+Restart-NavContainer -containerName $navContainerName -Verbose
+
 Write-Host "Update hosts file with database server IP"
 $file = "$env:windir\System32\drivers\etc\hosts"
 $dbcontainerip = docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' $dbServer
@@ -19,10 +22,8 @@ $data = foreach($line in Get-Content $file){
     $line
   }
 }
-"$dbcontainerip $dbcontainername" | Add-Content -PassThru $data
+"$dbcontainerip $dbServer" | Add-Content -PassThru $data
 $data | Set-Content $file -Force
-
-Restart-NavContainer -containerName $navContainerName -Verbose
 
 }
 Export-ModuleMember Restart-MVContainer

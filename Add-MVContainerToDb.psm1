@@ -25,21 +25,48 @@ $dbcred = New-Object System.Management.Automation.PSCredential("sa", $securePass
 $bstr = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($securePassword)
 $password = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($bstr)
 
+$hostOsVersion = [environment]::OSVersion.Version.Build
+if ($hostOsVersion -eq " 18362") 
+  {
+    $defaultImageTageName = 'navapps/mv-dynamics-nav-1903:'
+    $isolation = "process"
+  }
+else
+  {
+    $defaultImageTageName = 'navapps/mv-dynamics-nav:'
+    $isolation = "hyperv"
+  }
+
 if ($navImageNameTag -eq "") {
-  $navImageNameTag ='navapps/mv-dynamics-nav:latest'
+  $navImageNameTag = $defaultImageTageName
   switch($countryCode)
        {
-		""   { $navImageNameTag += '.bc.mv'}
-		"UKR"{ $navImageNameTag += '.bc.ukr'}
-		"GR" { $navImageNameTag += '.bc.gr'}
-		"BH" { $navImageNameTag += '.bc.bh'}	
-		"LT" { $navImageNameTag += '.2018.baltic'} 
-        "EE" { $navImageNameTag += '.2018.baltic'}	
-	    "LV" { $navImageNameTag += '.2018.baltic'}
-        "LVPOS"	{ $navImageNameTag += '.2017.baltic'}	
+		""   { $navImageNameTag += 'latest.bc.mv'}
+		"UKR"{ $navImageNameTag = 'mv.bc.autumn2018'}
+		"GR" { $navImageNameTag = 'mv.bc.autumn2018'}
+		"BH" { $navImageNameTag = 'mv.bc.autumn2018'}	
+		"LT" { $navImageNameTag += 'latest.2018.baltic'} 
+        "EE" { $navImageNameTag += 'latest.2018.baltic'}	
+	    "LV" { $navImageNameTag += 'latest.2018.baltic'}
+        "LVPOS"	{ $navImageNameTag += 'latest.2017.baltic'}	
 	   }
 }
 
+$hostname = $containerName 
+if ($dbimage -eq "") {
+    switch($countryCode){
+    ""    {$dbimage = 'navapps/mvxsql:mv.latest'}
+    "LT"  {$dbimage = 'navapps/mvxsql:lt.latest'}
+    "LV"  {$dbimage = 'navapps/mvxsql:lv.latest'}
+    "BH"  {$dbimage = 'navapps/mvxsql:bh.latest'}
+	"GR"  {$dbimage = 'navapps/mvxsql:gr.latest'}
+	"UKR" {$dbimage = 'navapps/mvxsql:ukr.latest'}
+	"EE"  {$dbimage = 'navapps/mvxsql:ee.latest'}
+	"LVPOS" {$dbimage = 'navapps/mvxsql:lvpos.latest'}
+    }
+   if ($hostOsVersion -eq "18362") 
+    {$dbimage = $dbimage+'.1903'}   	
+}
 
 $hostname = $containerName 
 if ($locale -eq "") {$locale = "nl-NL"}
